@@ -17,10 +17,31 @@ var uiController = (function() {
     },
     getDOMstrings: function() {
       return DOMstrings;
+    },
+    addListItem: function(item, type) {
+      //// 1. Orlogo zarlagiin element aguulsan HTML-iig beltgene
+      var html, list;
+      if (type === "inc") {
+        list = ".income__list";
+        html =
+          '<div class="item clearfix" id="inc-%id%"><div class="item__description">$$DESCRIPTION$$</div><div class="right clearfix"><div class="item__value">$$VALUE$$</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+      } else {
+        list = ".expenses__list";
+        html =
+          '<div class="item clearfix" id="exp-%id%"><div class="item__description">$$DESCRIPTION$$</div><div class="right clearfix"><div class="item__value">$$VALUE$$</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn">                <i class="ion-ios-close-outline"></i></button></div></div></div>';
+      }
+      //// 2. Ter HTML dotoroo orlogo zarlagiin utguudiig replace ashiglaj oorchilno
+      html = html.replace("%id%", item.id);
+      html = html.replace("$$DESCRIPTION$$", item.description);
+      html = html.replace("$$VALUE$$", item.value);
+
+      //// 3. Beltgesen HTML-ee delgetse
+      document.querySelector(list).insertAdjacentHTML("beforeend", html);
     }
   };
 })();
 //// Finance ajillah controller
+//// private function
 var financeController = (function() {
   var Income = function(id, description, value) {
     this.id = id;
@@ -34,7 +55,7 @@ var financeController = (function() {
   };
   //// Orlogo zarlagiig hadgaldag hubisagch
   var data = {
-    allItems: {
+    items: {
       inc: [],
       exp: []
     },
@@ -43,14 +64,39 @@ var financeController = (function() {
       exp: 0
     }
   };
+  return {
+    addItem: function(type, desc, val) {
+      var item, id;
+      //// ID shine id uusgej bn
+      if (data.items[type].length === 0) {
+        id = 1;
+      } else {
+        id = data.items[type][data.items[type].length - 1].id + 1;
+      }
+      //// Orlogo zarlagiin nohtsol shalgaj bn
+      if (type === "inc") {
+        item = new Income(id, desc, val);
+      } else {
+        item = new Expense(id, desc, val);
+      }
+      data.items[type].push(item);
+      return item;
+    }
+  };
 })();
 //// holboj ajillah controller
 var appController = (function(uiController, financeController) {
   var ctrlAddItem = function() {
     //// 1. Oruulah ogogdoliig beldetsees olj abna
-    console.log("Enter darlaa");
+    var input = uiController.getInput();
     //// 2. Olj absan ogogdoloo sanhuugiin controller ruu damjuulj hadgalna
+    var item = financeController.addItem(
+      input.type,
+      input.description,
+      input.value
+    );
     //// 3. Olj absan ogogdoliig tohiroh hesegt gargana
+    uiController.addListItem(item, input.type);
     //// 4. Tosobiig tootsoolno
     //// 5. Uldegdel tootsoog delgetsend gargana
   };
