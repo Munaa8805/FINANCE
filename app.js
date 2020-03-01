@@ -1,21 +1,49 @@
 //// Delgetstei ajillah controller
 
 var uiController = (function() {
-  var x = 100;
-
-  function add(y) {
-    return x + y;
-  }
-
+  var DOMstrings = {
+    inputType: ".add__type",
+    inputDescription: ".add__description",
+    inputValue: ".add__value",
+    addBtn: ".add__btn"
+  };
   return {
-    publicAdd: function(a) {
-      a = add(a);
-      console.log("Боловсруулсан утга : " + a);
+    getInput: function() {
+      return {
+        type: document.querySelector(DOMstrings.inputType).value,
+        description: document.querySelector(DOMstrings.inputDescription).value,
+        value: document.querySelector(DOMstrings.inputValue).value
+      };
+    },
+    getDOMstrings: function() {
+      return DOMstrings;
     }
   };
 })();
 //// Finance ajillah controller
-var financeController = (function() {})();
+var financeController = (function() {
+  var Income = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  var Expense = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+  //// Orlogo zarlagiig hadgaldag hubisagch
+  var data = {
+    allItems: {
+      inc: [],
+      exp: []
+    },
+    totals: {
+      inc: 0,
+      exp: 0
+    }
+  };
+})();
 //// holboj ajillah controller
 var appController = (function(uiController, financeController) {
   var ctrlAddItem = function() {
@@ -26,13 +54,25 @@ var appController = (function(uiController, financeController) {
     //// 4. Tosobiig tootsoolno
     //// 5. Uldegdel tootsoog delgetsend gargana
   };
-  document.querySelector(".add__btn").addEventListener("click", function() {
-    ctrlAddItem();
-  });
-  document.addEventListener("keypress", function(event) {
-    if (event.keyCode === 13 || event.which === 13) {
+  var setupEventListeners = function() {
+    //// getDOMstrings-ees tobch bolon class ruu handah bolomjiig olgoj bn
+    var DOM = uiController.getDOMstrings();
+    document.querySelector(DOM.addBtn).addEventListener("click", function() {
       ctrlAddItem();
+    });
+    document.addEventListener("keypress", function(event) {
+      if (event.keyCode === 13 || event.which === 13) {
+        ctrlAddItem();
+      }
+    });
+  };
+  return {
+    //// Application start function
+    init: function() {
+      console.log("Application start ....");
+      setupEventListeners();
     }
-  });
-  uiController.publicAdd(150);
+  };
 })(uiController, financeController);
+//// Application start function-iig duudaj bn
+appController.init();
