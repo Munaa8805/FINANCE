@@ -12,15 +12,39 @@ var uiController = (function() {
     incomeLabel: ".budget__income--value",
     expeseLabel: ".budget__expenses--value",
     percentageLabel: ".budget__expenses--percentage",
-    containerDiv: ".container"
+    containerDiv: ".container",
+    expensePercentageLabel: ".item__percentage",
+    dateLabel: ".budget__title--month"
   };
+
+  var nodeListForeach = function(list, callback) {
+    for (var i = 0; i < list.length; i++) {
+      callback(list[i], i);
+    }
+  };
+  var formatMoney = function(too) {};
   return {
+    displayDate: function() {
+      var unuudur = new Date();
+      document.querySelector(DOMstrings.dateLabel).textContent =
+        unuudur.getMonth() + " сарын өрхийн төсөв";
+    },
     getInput: function() {
       return {
         type: document.querySelector(DOMstrings.inputType).value,
         description: document.querySelector(DOMstrings.inputDescription).value,
         value: parseInt(document.querySelector(DOMstrings.inputValue).value)
       };
+    },
+    displayPercentages: function(allPercentages) {
+      //// Zarlagiin NodeList-iig olgoh
+      var elements = document.querySelectorAll(
+        DOMstrings.expensePercentageLabel
+      );
+      //// Element bolgonii hubid zarlagiin hubiig massive-ees abch shivj oruulna
+      nodeListForeach(elements, function(el, index) {
+        el.textContent = allPercentages[index];
+      });
     },
     getDOMstrings: function() {
       return DOMstrings;
@@ -91,6 +115,15 @@ var financeController = (function() {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
+  };
+  Expense.prototype.calcPercentage = function(totalInc) {
+    if (totalInc > 0)
+      this.percentage = Math.round((this.value / totalInc) * 100);
+    else this.percentage = 0;
+  };
+  Expense.prototype.getPercentage = function() {
+    return this.percentage;
   };
   //// tosob tootsooloh function
   var calculateTotal = function(type) {
@@ -122,7 +155,20 @@ var financeController = (function() {
       ////Tosov bodoj bn
       data.tusuv = data.totals.inc - data.totals.exp;
       ////Orlogo, zarlagiin huv-iig tootsoolj bn
-      data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+      if (data.totals.inc > 0)
+        data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+      else data.huvi = 0;
+    },
+    calculatePercentages: function() {
+      data.items.exp.forEach(function(el) {
+        el.calcPercentage(data.totals.inc);
+      });
+    },
+    getPercentages: function() {
+      var allPercentages = data.items.exp.map(function(el) {
+        return el.getPercentage();
+      });
+      return allPercentages;
     },
     tusviigAvah: function() {
       return {
@@ -178,14 +224,24 @@ var appController = (function(uiController, financeController) {
       //// 3. Olj absan ogogdoliig tohiroh hesegt gargana
       uiController.addListItem(item, input.type);
       uiController.clearFields();
-      //// 4. Tosobiig tootsoolno
-      financeController.tusuvTootsooloh();
-      //// 5. Uldegdel tootsoog  gargana
-      var tusuv = financeController.tusviigAvah();
-      //// 6. delgetsend gargana
-      console.log(tusuv);
-      uiController.tusviigUzuuleh(tusuv);
+      //// Tosobiig shineer tootsooolood delgetsend gargana.
+      updateTusuv();
     }
+  };
+  var updateTusuv = function() {
+    //// 4. Tosobiig tootsoolno
+    financeController.tusuvTootsooloh();
+    //// 5. Uldegdel tootsoog  gargana
+    var tusuv = financeController.tusviigAvah();
+    //// 6. delgetsend gargana
+
+    uiController.tusviigUzuuleh(tusuv);
+    //// 7. Elementuudiin hubiig tootsoolno
+    financeController.calculatePercentages();
+    //// 8. Elementuudiin hubiig huleej abn
+    var allPercentages = financeController.getPercentages();
+    //// 9. Edgeeriig delgetsend garnaa
+    uiController.displayPercentages(allPercentages);
   };
   var setupEventListeners = function() {
     //// getDOMstrings-ees tobch bolon class ruu handah bolomjiig olgoj bn
@@ -211,6 +267,8 @@ var appController = (function(uiController, financeController) {
           //// 2. Delgets deerees ustgana
           uiController.deletListItem(id);
           //// 3. Uldegdel tootsoog shinechilj haruulna
+          //// Tosobiig shineer tootsooolood delgetsend gargana.
+          updateTusuv();
         }
       });
   };
@@ -218,6 +276,7 @@ var appController = (function(uiController, financeController) {
     //// Application start function
     init: function() {
       console.log("Application start ....");
+      uiController.displayDate();
       uiController.tusviigUzuuleh({
         tusuv: 0,
         huvi: 0,
